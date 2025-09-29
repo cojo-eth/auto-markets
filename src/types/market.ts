@@ -27,6 +27,9 @@ export interface Market {
   // Status
   status: 'active' | 'resolved' | 'pending';
   confidence: number; // 0-100 percentage
+  
+  // Oracle settings
+  oracleType: 'creator' | 'ai';
 }
 
 export interface Bet {

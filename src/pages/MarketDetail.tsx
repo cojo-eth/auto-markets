@@ -1,5 +1,5 @@
 import { useParams, Link } from 'react-router-dom';
-import { mockMarkets } from '@/lib/mockData';
+import { getMockMarkets } from '@/lib/mockData';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -21,7 +21,8 @@ import { useToast } from '@/hooks/use-toast';
 export default function MarketDetail() {
   const { id } = useParams();
   const { toast } = useToast();
-  const market = mockMarkets.find(m => m.id === id);
+  const markets = getMockMarkets();
+  const market = markets.find(m => m.id === id);
 
   if (!market) {
     return (

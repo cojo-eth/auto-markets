@@ -6,6 +6,60 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+async function fetchOGImage(url: string): Promise<string | null> {
+  try {
+    const response = await fetch(url);
+    const html = await response.text();
+    
+    // Try to extract og:image
+    const ogImageMatch = html.match(/<meta\s+property="og:image"\s+content="([^"]+)"/i) ||
+                        html.match(/<meta\s+content="([^"]+)"\s+property="og:image"/i);
+    
+    if (ogImageMatch && ogImageMatch[1]) {
+      return ogImageMatch[1];
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error fetching OG image:', error);
+    return null;
+  }
+}
+
+async function generateMarketImage(prompt: string, apiKey: string): Promise<string> {
+  try {
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash-image-preview',
+        messages: [
+          {
+            role: 'user',
+            content: `Generate a prediction market hero image for: ${prompt}. Make it professional, engaging, and suitable for a betting/prediction market platform. 16:9 aspect ratio.`
+          }
+        ],
+        modalities: ['image', 'text']
+      }),
+    });
+
+    const data = await response.json();
+    const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    
+    if (imageUrl) {
+      return imageUrl;
+    }
+    
+    throw new Error('No image generated');
+  } catch (error) {
+    console.error('Error generating image:', error);
+    throw error;
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -107,6 +161,20 @@ First, fetch and read the content of the webpage. Then generate a binary predict
 
     const marketData = JSON.parse(toolCall.function.arguments);
     
+    // Try to fetch OG image first
+    let ogImage = await fetchOGImage(url);
+    
+    // If no OG image found, generate one with AI
+    if (!ogImage) {
+      console.log('No OG image found, generating with AI...');
+      try {
+        ogImage = await generateMarketImage(marketData.question, LOVABLE_API_KEY);
+        console.log('Generated image URL:', ogImage);
+      } catch (error) {
+        console.error('Failed to generate image, will use placeholder:', error);
+      }
+    }
+    
     // Return the generated market data
     return new Response(
       JSON.stringify({
@@ -114,6 +182,7 @@ First, fetch and read the content of the webpage. Then generate a binary predict
         market: {
           ...marketData,
           sourceUrl: url,
+          ogImage: ogImage || undefined,
         }
       }),
       {

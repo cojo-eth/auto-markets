@@ -1,106 +1,42 @@
 import { Market } from '@/types/market';
 
-export const mockMarkets: Market[] = [
-  {
-    id: '1',
-    question: 'Will Bitcoin reach $100k by end of Q1 2025?',
-    description: 'Market resolves YES if BTC hits $100,000 on any major exchange before March 31, 2025.',
-    sourceUrl: 'https://twitter.com/example/status/123',
-    ogImage: 'https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=800&h=400&fit=crop',
-    ogTitle: 'Bitcoin Price Prediction Thread',
-    yesPrice: 73,
-    noPrice: 27,
-    volume: 45623,
-    liquidity: 12500,
-    totalBets: 234,
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-    expiresAt: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000),
-    creatorAddress: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
-    creatorStake: 10,
-    creatorEarnings: 912.46,
-    status: 'active',
-    confidence: 85,
-  },
-  {
-    id: '2',
-    question: 'Will Apple announce Vision Pro 2 at WWDC 2025?',
-    description: 'Resolves YES if Apple officially announces a second generation Vision Pro at WWDC 2025.',
-    sourceUrl: 'https://reddit.com/r/apple/comments/example',
-    ogImage: 'https://images.unsplash.com/photo-1592478411213-6153e4ebc07d?w=800&h=400&fit=crop',
-    ogTitle: 'WWDC 2025 Predictions Megathread',
-    yesPrice: 42,
-    noPrice: 58,
-    volume: 28940,
-    liquidity: 8200,
-    totalBets: 156,
-    createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000),
-    expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-    creatorAddress: '0x8ba1f109551bD432803012645Ac136ddd64DBA72',
-    creatorStake: 5,
-    creatorEarnings: 578.80,
-    status: 'active',
-    confidence: 72,
-  },
-  {
-    id: '3',
-    question: 'Will SpaceX successfully land Starship on Mars in 2025?',
-    description: 'Market resolves YES if SpaceX achieves a controlled landing of any Starship vehicle on Mars in 2025.',
-    sourceUrl: 'https://news.ycombinator.com/item?id=example',
-    ogImage: 'https://images.unsplash.com/photo-1614728423169-3f65fd722b7e?w=800&h=400&fit=crop',
-    ogTitle: 'SpaceX Mars Mission Timeline Discussion',
-    yesPrice: 15,
-    noPrice: 85,
-    volume: 67234,
-    liquidity: 15600,
-    totalBets: 389,
-    createdAt: new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),
-    expiresAt: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
-    creatorAddress: '0x1234567890abcdef1234567890abcdef12345678',
-    creatorStake: 20,
-    creatorEarnings: 1344.68,
-    status: 'active',
-    confidence: 91,
-  },
-  {
-    id: '4',
-    question: 'Will Ethereum ETF see $1B inflow in first week?',
-    description: 'Resolves YES if total net inflows exceed $1 billion in the first 7 days of trading.',
-    sourceUrl: 'https://twitter.com/example/status/456',
-    ogImage: 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&h=400&fit=crop',
-    ogTitle: 'ETH ETF Launch Analysis',
-    yesPrice: 88,
-    noPrice: 12,
-    volume: 123456,
-    liquidity: 28900,
-    totalBets: 567,
-    createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-    expiresAt: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000),
-    creatorAddress: '0xabcdef1234567890abcdef1234567890abcdef12',
-    creatorStake: 50,
-    creatorEarnings: 2469.12,
-    status: 'active',
-    confidence: 95,
-  },
-];
+export function getMockMarkets(): Market[] {
+  const stored = localStorage.getItem('quickbet_markets');
+  if (stored) {
+    try {
+      const markets = JSON.parse(stored);
+      // Convert date strings back to Date objects
+      return markets.map((m: any) => ({
+        ...m,
+        createdAt: new Date(m.createdAt),
+        expiresAt: new Date(m.expiresAt),
+      }));
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
 
-export const generateMockMarket = (url: string): Market => {
-  const questions = [
-    'Will this post reach 10k likes in 24 hours?',
-    'Will this prediction come true within a week?',
-    'Will this news impact the market by >5%?',
-    'Will this trend last more than 3 days?',
-  ];
+export function saveMarket(market: Market) {
+  const markets = getMockMarkets();
+  markets.unshift(market); // Add to beginning
+  localStorage.setItem('quickbet_markets', JSON.stringify(markets));
+}
 
+export function generateMockMarket(sourceUrl: string, overrides?: Partial<Market>): Market {
+  const id = Math.random().toString(36).substring(7);
   const now = new Date();
-  const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 7);
+  
   return {
-    id: Math.random().toString(36).substring(7),
-    question: questions[Math.floor(Math.random() * questions.length)],
-    description: 'This market was automatically generated from the provided link using AI analysis.',
-    sourceUrl: url,
-    ogImage: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=400&fit=crop',
-    ogTitle: 'Generated Market',
+    id,
+    question: "Will this prediction come true?",
+    description: "A prediction market generated from the provided URL.",
+    sourceUrl,
+    ogImage: undefined,
+    ogTitle: "Prediction Market",
     yesPrice: 50,
     noPrice: 50,
     volume: 0,
@@ -108,10 +44,12 @@ export const generateMockMarket = (url: string): Market => {
     totalBets: 0,
     createdAt: now,
     expiresAt,
-    creatorAddress: '0x' + Math.random().toString(16).substring(2, 42),
-    creatorStake: 1,
+    creatorAddress: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb1",
+    creatorStake: 100,
     creatorEarnings: 0,
     status: 'active',
-    confidence: 10,
+    confidence: 75,
+    oracleType: 'creator',
+    ...overrides,
   };
-};
+}

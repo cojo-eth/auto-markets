@@ -2,19 +2,24 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { Link as LinkIcon, Sparkles, TrendingUp, Zap, ArrowRight, Edit2, Check } from 'lucide-react';
+import { Link as LinkIcon, Sparkles, TrendingUp, Zap, ArrowRight, Edit2, Check, Calendar, DollarSign, Shield } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { generateMockMarket } from '@/lib/mockData';
+import { generateMockMarket, saveMarket } from '@/lib/mockData';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface GeneratedMarket {
   question: string;
   description: string;
   ogTitle: string;
+  ogImage?: string;
   confidence: number;
   sourceUrl: string;
+  duration?: number; // in days
+  oracleType?: 'creator' | 'ai';
+  poolSize?: number;
 }
 
 export default function Index() {
@@ -68,8 +73,18 @@ export default function Index() {
         throw new Error(data.error || 'Failed to generate market');
       }
 
-      setGeneratedMarket(data.market);
-      setEditedMarket(data.market);
+      setGeneratedMarket({
+        ...data.market,
+        duration: 7,
+        oracleType: 'creator',
+        poolSize: 100,
+      });
+      setEditedMarket({
+        ...data.market,
+        duration: 7,
+        oracleType: 'creator',
+        poolSize: 100,
+      });
       
       toast({
         title: "Market generated! ✨",
@@ -90,18 +105,31 @@ export default function Index() {
   const handleLaunchMarket = () => {
     if (!editedMarket) return;
     
-    const market = generateMockMarket(editedMarket.sourceUrl);
-    market.question = editedMarket.question;
-    market.description = editedMarket.description;
-    market.ogTitle = editedMarket.ogTitle;
-    market.confidence = editedMarket.confidence;
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + (editedMarket.duration || 7));
+    
+    const market = generateMockMarket(editedMarket.sourceUrl, {
+      question: editedMarket.question,
+      description: editedMarket.description,
+      ogTitle: editedMarket.ogTitle,
+      ogImage: editedMarket.ogImage,
+      confidence: editedMarket.confidence,
+      expiresAt,
+      oracleType: editedMarket.oracleType || 'creator',
+      creatorStake: editedMarket.poolSize || 100,
+      liquidity: (editedMarket.poolSize || 100) * 2, // 2x multiplier for virtual liquidity
+    });
+    
+    // Save to localStorage
+    saveMarket(market);
     
     toast({
       title: "Market launched! 🎉",
       description: "Your prediction market is now live",
     });
     
-    navigate(`/market/${market.id}`);
+    // Navigate to markets page
+    navigate('/markets');
   };
 
   const handleReset = () => {
@@ -226,37 +254,108 @@ export default function Index() {
                   </div>
                 </div>
 
-                <div className="space-y-4">
+                {/* Preview Image */}
+                {editedMarket?.ogImage && (
+                  <div className="relative w-full h-48 rounded-lg overflow-hidden bg-muted">
+                    <img 
+                      src={editedMarket.ogImage} 
+                      alt="Market preview" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="space-y-4 md:col-span-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="question">Market Question</Label>
+                      <Input
+                        id="question"
+                        value={editedMarket?.question || ''}
+                        onChange={(e) => setEditedMarket(prev => prev ? {...prev, question: e.target.value} : null)}
+                        className="text-lg"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="description">Description & Resolution Criteria</Label>
+                      <Textarea
+                        id="description"
+                        value={editedMarket?.description || ''}
+                        onChange={(e) => setEditedMarket(prev => prev ? {...prev, description: e.target.value} : null)}
+                        className="min-h-32"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="ogTitle">Market Title</Label>
+                      <Input
+                        id="ogTitle"
+                        value={editedMarket?.ogTitle || ''}
+                        onChange={(e) => setEditedMarket(prev => prev ? {...prev, ogTitle: e.target.value} : null)}
+                      />
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
-                    <Label htmlFor="question">Market Question</Label>
+                    <Label htmlFor="duration" className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4" />
+                      Duration
+                    </Label>
+                    <Select 
+                      value={editedMarket?.duration?.toString()} 
+                      onValueChange={(value) => setEditedMarket(prev => prev ? {...prev, duration: parseInt(value)} : null)}
+                    >
+                      <SelectTrigger id="duration">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">1 day</SelectItem>
+                        <SelectItem value="3">3 days</SelectItem>
+                        <SelectItem value="7">7 days (default)</SelectItem>
+                        <SelectItem value="14">14 days</SelectItem>
+                        <SelectItem value="30">30 days</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="oracleType" className="flex items-center gap-2">
+                      <Shield className="w-4 h-4" />
+                      Oracle Type
+                    </Label>
+                    <Select 
+                      value={editedMarket?.oracleType} 
+                      onValueChange={(value: 'creator' | 'ai') => setEditedMarket(prev => prev ? {...prev, oracleType: value} : null)}
+                    >
+                      <SelectTrigger id="oracleType">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="creator">Creator Oracle</SelectItem>
+                        <SelectItem value="ai">AI Oracle</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="poolSize" className="flex items-center gap-2">
+                      <DollarSign className="w-4 h-4" />
+                      Initial Pool Size (USD)
+                    </Label>
                     <Input
-                      id="question"
-                      value={editedMarket?.question || ''}
-                      onChange={(e) => setEditedMarket(prev => prev ? {...prev, question: e.target.value} : null)}
-                      className="text-lg"
+                      id="poolSize"
+                      type="number"
+                      min="1"
+                      value={editedMarket?.poolSize || 100}
+                      onChange={(e) => setEditedMarket(prev => prev ? {...prev, poolSize: parseInt(e.target.value) || 100} : null)}
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Your stake to seed the market. Platform adds 100x virtual liquidity.
+                    </p>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Description & Resolution Criteria</Label>
-                    <Textarea
-                      id="description"
-                      value={editedMarket?.description || ''}
-                      onChange={(e) => setEditedMarket(prev => prev ? {...prev, description: e.target.value} : null)}
-                      className="min-h-32"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="ogTitle">Source Title</Label>
-                    <Input
-                      id="ogTitle"
-                      value={editedMarket?.ogTitle || ''}
-                      onChange={(e) => setEditedMarket(prev => prev ? {...prev, ogTitle: e.target.value} : null)}
-                    />
-                  </div>
-
-                  <div className="p-4 bg-muted/50 rounded-lg">
+                  <div className="md:col-span-2 p-4 bg-muted/50 rounded-lg">
                     <p className="text-sm text-muted-foreground">
                       <strong>Source:</strong>{' '}
                       <a href={editedMarket?.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">

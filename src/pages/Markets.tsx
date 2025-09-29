@@ -2,15 +2,16 @@ import { useState } from 'react';
 import { MarketCard } from '@/components/MarketCard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { mockMarkets } from '@/lib/mockData';
+import { getMockMarkets } from '@/lib/mockData';
 import { TrendingUp, Clock, DollarSign, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function Markets() {
   const [sortBy, setSortBy] = useState<'volume' | 'recent' | 'ending'>('volume');
   const [searchQuery, setSearchQuery] = useState('');
+  const markets = getMockMarkets();
 
-  const sortedMarkets = [...mockMarkets].sort((a, b) => {
+  const sortedMarkets = [...markets].sort((a, b) => {
     switch (sortBy) {
       case 'volume':
         return b.volume - a.volume;
@@ -55,7 +56,7 @@ export default function Markets() {
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">All Markets</h1>
           <p className="text-muted-foreground">
-            Browse active prediction markets · {mockMarkets.length} live markets
+            Browse active prediction markets · {markets.length} live markets
           </p>
         </div>
 
@@ -67,7 +68,7 @@ export default function Markets() {
               <span className="text-sm text-muted-foreground">Total Volume</span>
             </div>
             <div className="text-3xl font-bold">
-              ${(mockMarkets.reduce((sum, m) => sum + m.volume, 0) / 1000).toFixed(0)}k
+              ${(markets.reduce((sum, m) => sum + m.volume, 0) / 1000).toFixed(0)}k
             </div>
           </div>
           <div className="bg-card border border-border rounded-lg p-6">
@@ -76,7 +77,7 @@ export default function Markets() {
               <span className="text-sm text-muted-foreground">Total Bets</span>
             </div>
             <div className="text-3xl font-bold">
-              {mockMarkets.reduce((sum, m) => sum + m.totalBets, 0)}
+              {markets.reduce((sum, m) => sum + m.totalBets, 0)}
             </div>
           </div>
           <div className="bg-card border border-border rounded-lg p-6">
@@ -84,7 +85,7 @@ export default function Markets() {
               <Clock className="w-5 h-5 text-primary" />
               <span className="text-sm text-muted-foreground">Active Markets</span>
             </div>
-            <div className="text-3xl font-bold">{mockMarkets.length}</div>
+            <div className="text-3xl font-bold">{markets.length}</div>
           </div>
         </div>
 

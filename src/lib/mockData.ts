@@ -1,5 +1,7 @@
 import { Market } from '@/types/market';
 
+// Market data management functions
+
 export function getMockMarkets(): Market[] {
   const stored = localStorage.getItem('quickbet_markets');
   if (stored) {

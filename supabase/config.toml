@@ -1,0 +1,4 @@
+project_id = "plosvqcnhjxjppknzvua"
+
+[functions.generate-market]
+verify_jwt = false

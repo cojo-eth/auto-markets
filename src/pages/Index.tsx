@@ -160,32 +160,48 @@ export default function Index() {
         {/* Hero Section */}
         {!generatedMarket ? (
           <div className="flex-1 flex items-center justify-center px-4 py-12">
-            <div className="max-w-3xl w-full text-center space-y-12">
+            <div className="max-w-3xl w-full text-center space-y-10">
               {/* Logo */}
-              <div className="flex justify-center">
+              <div className="flex justify-center animate-fade-in">
                 <img 
                   src={logoImage} 
                   alt="Auto Markets" 
-                  className="w-64 md:w-80 h-auto"
+                  className="w-72 md:w-96 h-auto"
                 />
               </div>
 
               {/* Subtitle */}
-              <h1 className="text-2xl md:text-3xl font-medium text-foreground">
+              <h1 className="text-2xl md:text-3xl font-medium text-foreground tracking-tight">
                 Instant prediction markets
               </h1>
 
+              {/* Feature Badges */}
+              <div className="flex items-center justify-center gap-4 flex-wrap">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-card/40 backdrop-blur-sm border border-border/40 text-sm text-foreground/80">
+                  <Zap className="w-3.5 h-3.5 text-primary" />
+                  <span className="font-medium">Instant Generation</span>
+                </div>
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-card/40 backdrop-blur-sm border border-border/40 text-sm text-foreground/80">
+                  <Sparkles className="w-3.5 h-3.5 text-accent" />
+                  <span className="font-medium">AI Enhanced</span>
+                </div>
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-card/40 backdrop-blur-sm border border-border/40 text-sm text-foreground/80">
+                  <TrendingUp className="w-3.5 h-3.5 text-success" />
+                  <span className="font-medium">Earn 2%</span>
+                </div>
+              </div>
+
               {/* Input Section */}
-              <div className="space-y-4 max-w-2xl mx-auto">
+              <div className="space-y-4 max-w-2xl mx-auto pt-4">
                 <div className="relative">
-                  <LinkIcon className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-primary" />
+                  <LinkIcon className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
                   <Input
                     type="url"
                     placeholder="https://x.com... or any link"
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
-                    className="pl-16 h-16 text-lg bg-background/50 backdrop-blur-sm border-2 border-border/50 rounded-full focus:border-primary/50"
+                    className="pl-14 h-14 text-base bg-card/60 backdrop-blur-md border border-border/50 rounded-full focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/60"
                     disabled={isGenerating}
                   />
                 </div>
@@ -193,42 +209,33 @@ export default function Index() {
                 <Button 
                   variant="hero" 
                   size="lg" 
-                  className="w-full h-16 text-lg rounded-full"
+                  className="w-full h-14 text-base font-semibold rounded-full shadow-lg hover:shadow-glow"
                   onClick={handleGenerate}
                   disabled={isGenerating}
                 >
                   {isGenerating ? (
                     <>
-                      <Sparkles className="w-6 h-6 animate-spin" />
+                      <Sparkles className="w-5 h-5 animate-spin" />
                       Generating Market...
                     </>
                   ) : (
                     <>
                       Generate Market
-                      <ArrowRight className="w-6 h-6" />
+                      <ArrowRight className="w-5 h-5" />
                     </>
                   )}
                 </Button>
 
                 {/* Tagline */}
-                <p className="text-lg text-foreground/80 pt-4">
+                <p className="text-base text-foreground/60 pt-2 font-medium">
                   Drop a link. Make a market. Share it anywhere.
                 </p>
               </div>
 
-              {/* Earn Badge */}
-              <div className="pt-8">
-                <div className="inline-block px-6 py-3 bg-card/50 backdrop-blur-sm border border-border/50 rounded-full">
-                  <p className="text-xl font-semibold text-foreground">
-                    Earn 2%
-                  </p>
-                </div>
-              </div>
-
               {/* Browse Markets Link */}
-              <div className="pt-4">
+              <div className="pt-6">
                 <Link to="/markets">
-                  <Button variant="outline" size="lg" className="rounded-full">
+                  <Button variant="outline" size="lg" className="rounded-full border-border/60 hover:bg-card/40 transition-all">
                     Browse Markets
                     <ArrowRight className="w-4 h-4" />
                   </Button>
@@ -238,15 +245,15 @@ export default function Index() {
           </div>
         ) : (
           <div className="flex-1 flex items-center justify-center px-4 py-12">
-            <Card className="p-8 max-w-3xl w-full mx-auto bg-card/80 backdrop-blur-lg border-border/50 shadow-glow">
+            <Card className="p-8 max-w-3xl w-full mx-auto bg-card/90 backdrop-blur-xl border border-border/50 shadow-2xl rounded-2xl">
               <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between pb-4 border-b border-border/50">
                   <div className="flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-primary" />
-                    <h2 className="text-xl font-semibold">Review & Edit Market</h2>
+                    <h2 className="text-xl font-semibold tracking-tight">Review & Edit Market</h2>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span className="px-3 py-1 bg-primary/10 rounded-full">
+                    <span className="px-3 py-1 bg-primary/10 rounded-full font-medium">
                       {editedMarket?.confidence}% confidence
                     </span>
                   </div>

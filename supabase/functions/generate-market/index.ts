@@ -15,25 +15,42 @@ async function fetchPageMetadata(url: string): Promise<{ title: string; descript
     });
     const html = await response.text();
     
-    // Helper function to extract meta content
+    console.log('HTML length:', html.length);
+    
+    // Extract all meta tags for debugging
+    const allMetaTags = html.match(/<meta[^>]+>/gi) || [];
+    console.log('Found meta tags:', allMetaTags.length);
+    
+    // More flexible meta tag extraction
     const getMeta = (property: string): string | null => {
-      const patterns = [
-        new RegExp(`<meta\\s+property="${property}"\\s+content="([^"]+)"`, 'i'),
-        new RegExp(`<meta\\s+content="([^"]+)"\\s+property="${property}"`, 'i'),
-        new RegExp(`<meta\\s+name="${property}"\\s+content="([^"]+)"`, 'i'),
-        new RegExp(`<meta\\s+content="([^"]+)"\\s+name="${property}"`, 'i'),
-      ];
+      // Try property attribute first (OG tags)
+      let match = html.match(new RegExp(`<meta[^>]*property=["']${property}["'][^>]*content=["']([^"']+)["']`, 'i'));
+      if (!match) {
+        match = html.match(new RegExp(`<meta[^>]*content=["']([^"']+)["'][^>]*property=["']${property}["']`, 'i'));
+      }
       
-      for (const pattern of patterns) {
-        const match = html.match(pattern);
-        if (match && match[1]) {
-          return match[1].replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#039;/g, "'");
-        }
+      // Try name attribute (Twitter cards, standard meta)
+      if (!match) {
+        match = html.match(new RegExp(`<meta[^>]*name=["']${property}["'][^>]*content=["']([^"']+)["']`, 'i'));
+      }
+      if (!match) {
+        match = html.match(new RegExp(`<meta[^>]*content=["']([^"']+)["'][^>]*name=["']${property}["']`, 'i'));
+      }
+      
+      if (match && match[1]) {
+        const decoded = match[1]
+          .replace(/&amp;/g, '&')
+          .replace(/&quot;/g, '"')
+          .replace(/&#039;/g, "'")
+          .replace(/&lt;/g, '<')
+          .replace(/&gt;/g, '>');
+        console.log(`Found ${property}:`, decoded.substring(0, 100));
+        return decoded;
       }
       return null;
     };
     
-    // Extract Open Graph and Twitter card data
+    // Extract various meta tags
     const ogTitle = getMeta('og:title');
     const ogDescription = getMeta('og:description');
     const ogImage = getMeta('og:image');
@@ -41,18 +58,30 @@ async function fetchPageMetadata(url: string): Promise<{ title: string; descript
     const twitterTitle = getMeta('twitter:title');
     const twitterDescription = getMeta('twitter:description');
     const twitterImage = getMeta('twitter:image');
+    const twitterImageSrc = getMeta('twitter:image:src');
     
-    // Fallback to standard meta tags
     const metaDescription = getMeta('description');
-    const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
-    const htmlTitle = titleMatch ? titleMatch[1] : '';
+    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+    const htmlTitle = titleMatch ? titleMatch[1].replace(/&amp;/g, '&').replace(/&quot;/g, '"') : '';
+    
+    console.log('Extraction results:', {
+      ogTitle: ogTitle ? 'Found' : 'None',
+      twitterTitle: twitterTitle ? 'Found' : 'None',
+      htmlTitle: htmlTitle ? 'Found' : 'None',
+      ogDescription: ogDescription ? 'Found' : 'None',
+      twitterDescription: twitterDescription ? 'Found' : 'None'
+    });
     
     // Prefer OG/Twitter tags, fall back to standard
-    const title = ogTitle || twitterTitle || htmlTitle || 'No title found';
-    const description = ogDescription || twitterDescription || metaDescription || 'No description found';
-    const image = ogImage || twitterImage || null;
+    const title = ogTitle || twitterTitle || htmlTitle || '';
+    const description = ogDescription || twitterDescription || metaDescription || '';
+    const image = ogImage || twitterImage || twitterImageSrc || null;
     
-    console.log('Extracted metadata:', { title, description, image: image ? 'Found' : 'None' });
+    console.log('Final metadata:', { 
+      title: title ? title.substring(0, 100) : 'EMPTY', 
+      description: description ? description.substring(0, 100) : 'EMPTY',
+      image: image ? 'Found' : 'None' 
+    });
     
     return { title, description, image };
   } catch (error) {
@@ -138,19 +167,19 @@ serve(async (req) => {
           },
           {
             role: 'user',
-            content: `Based on this webpage metadata, create a binary prediction market:
+            content: `Create a binary prediction market based on this webpage:
 
-**Source:** ${url}
-**Title:** ${metadata.title}
-**Description:** ${metadata.description}
+**URL:** ${url}
+**Title:** ${metadata.title || 'N/A'}
+**Description:** ${metadata.description || 'N/A'}
 
-Create a prediction market with:
-1. A clear YES/NO question that can be resolved within 7 days
-2. A detailed description explaining resolution criteria
-3. Context from the source material
-4. Make it interesting and likely to attract bets
+Your task: Create a YES/NO prediction market that:
+1. Is directly based on the content/claims in the title and description above
+2. Can be objectively resolved within 7 days  
+3. Is interesting and likely to attract bets
+4. Has clear resolution criteria
 
-IMPORTANT: Base your market ONLY on the actual content provided above. Do not make assumptions or add unrelated topics.`
+CRITICAL: The market MUST be about the actual subject matter in the title/description, NOT about metadata or technical aspects. Focus on the content itself.`
           }
         ],
         tools: [

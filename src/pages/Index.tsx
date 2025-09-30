@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { Link as LinkIcon, Sparkles, TrendingUp, Zap, ArrowRight, Edit2, Check, Calendar, DollarSign, Shield } from 'lucide-react';
+import { Copy, Sparkles, TrendingUp, Zap, ArrowRight, Edit2, Check, Calendar, DollarSign, Shield } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { generateMockMarket, saveMarket } from '@/lib/mockData';
 import { useToast } from '@/hooks/use-toast';
@@ -178,10 +178,6 @@ export default function Index() {
                   <span className="font-medium">Instant Generation</span>
                 </div>
                 <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-card/30 backdrop-blur-md border border-border/30 text-sm text-foreground/70 hover:bg-card/40 transition-all">
-                  <Sparkles className="w-3.5 h-3.5 text-accent" />
-                  <span className="font-medium">AI Enhanced</span>
-                </div>
-                <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-card/30 backdrop-blur-md border border-border/30 text-sm text-foreground/70 hover:bg-card/40 transition-all">
                   <TrendingUp className="w-3.5 h-3.5 text-success" />
                   <span className="font-medium">Earn 2%</span>
                 </div>
@@ -190,7 +186,7 @@ export default function Index() {
               {/* Input Section */}
               <div className="space-y-3 max-w-xl mx-auto">
                 <div className="relative">
-                  <LinkIcon className="absolute left-5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-foreground/60" />
+                  <Copy className="absolute left-5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-foreground/60" />
                   <Input
                     type="url"
                     placeholder="https://x.com... or any link"

@@ -9,6 +9,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import logoImage from '@/assets/logo.png';
+import gearsBackground from '@/assets/gears-bg.png';
 
 interface GeneratedMarket {
   question: string;
@@ -139,64 +141,51 @@ export default function Index() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/">
-              <h1 className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                QuickBet
+    <div className="min-h-screen relative">
+      {/* Background Image with Overlay */}
+      <div 
+        className="fixed inset-0 z-0"
+        style={{
+          backgroundImage: `url(${gearsBackground})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
+      >
+        <div className="absolute inset-0 bg-background/90" />
+      </div>
+
+      {/* Content */}
+      <div className="relative z-10 min-h-screen flex flex-col">
+        {/* Hero Section */}
+        {!generatedMarket ? (
+          <div className="flex-1 flex items-center justify-center px-4 py-12">
+            <div className="max-w-3xl w-full text-center space-y-12">
+              {/* Logo */}
+              <div className="flex justify-center">
+                <img 
+                  src={logoImage} 
+                  alt="Auto Markets" 
+                  className="w-64 md:w-80 h-auto"
+                />
+              </div>
+
+              {/* Subtitle */}
+              <h1 className="text-2xl md:text-3xl font-medium text-foreground">
+                Instant prediction markets
               </h1>
-            </Link>
-            <nav className="flex gap-6">
-              <Link to="/" className="text-foreground font-semibold">
-                Create
-              </Link>
-              <Link to="/markets" className="text-muted-foreground hover:text-foreground transition-colors">
-                Markets
-              </Link>
-            </nav>
-          </div>
-        </div>
-      </header>
 
-      {/* Hero Section */}
-      <div className="container mx-auto px-4 py-20 md:py-32">
-        <div className="max-w-4xl mx-auto text-center space-y-8">
-          <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary mb-4">
-              <Sparkles className="w-4 h-4" />
-              <span className="text-sm font-medium">Drop a link, create a market</span>
-            </div>
-            
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
-              Instant Prediction
-              <br />
-              <span className="bg-gradient-primary bg-clip-text text-transparent">
-                Markets
-              </span>
-            </h1>
-            
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
-              Paste any link from the web. We'll instantly create a prediction market with AI.
-              Share it anywhere. Start earning.
-            </p>
-          </div>
-
-          {/* URL Input Card */}
-          {!generatedMarket ? (
-            <Card className="p-8 max-w-2xl mx-auto bg-card/50 backdrop-blur-sm border-border/50 shadow-glow">
-              <div className="space-y-4">
+              {/* Input Section */}
+              <div className="space-y-4 max-w-2xl mx-auto">
                 <div className="relative">
-                  <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                  <LinkIcon className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-primary" />
                   <Input
                     type="url"
-                    placeholder="https://twitter.com/... or any link"
+                    placeholder="https://x.com... or any link"
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
-                    className="pl-12 h-14 text-lg"
+                    className="pl-16 h-16 text-lg bg-background/50 backdrop-blur-sm border-2 border-border/50 rounded-full focus:border-primary/50"
                     disabled={isGenerating}
                   />
                 </div>
@@ -204,43 +193,52 @@ export default function Index() {
                 <Button 
                   variant="hero" 
                   size="lg" 
-                  className="w-full h-14 text-lg"
+                  className="w-full h-16 text-lg rounded-full"
                   onClick={handleGenerate}
                   disabled={isGenerating}
                 >
                   {isGenerating ? (
                     <>
-                      <Sparkles className="w-5 h-5 animate-spin" />
+                      <Sparkles className="w-6 h-6 animate-spin" />
                       Generating Market...
                     </>
                   ) : (
                     <>
                       Generate Market
-                      <ArrowRight className="w-5 h-5" />
+                      <ArrowRight className="w-6 h-6" />
                     </>
                   )}
                 </Button>
+
+                {/* Tagline */}
+                <p className="text-lg text-foreground/80 pt-4">
+                  Drop a link. Make a market. Share it anywhere.
+                </p>
               </div>
 
-              <div className="mt-6 pt-6 border-t border-border">
-                <div className="flex items-center justify-center gap-8 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <Zap className="w-4 h-4 text-primary" />
-                    <span>Instant creation</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-primary" />
-                    <span>AI-powered</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-primary" />
-                    <span>Earn 2% fees</span>
-                  </div>
+              {/* Earn Badge */}
+              <div className="pt-8">
+                <div className="inline-block px-6 py-3 bg-card/50 backdrop-blur-sm border border-border/50 rounded-full">
+                  <p className="text-xl font-semibold text-foreground">
+                    Earn 2%
+                  </p>
                 </div>
               </div>
-            </Card>
-          ) : (
-            <Card className="p-8 max-w-3xl mx-auto bg-card/50 backdrop-blur-sm border-border/50 shadow-glow">
+
+              {/* Browse Markets Link */}
+              <div className="pt-4">
+                <Link to="/markets">
+                  <Button variant="outline" size="lg" className="rounded-full">
+                    Browse Markets
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 flex items-center justify-center px-4 py-12">
+            <Card className="p-8 max-w-3xl w-full mx-auto bg-card/80 backdrop-blur-lg border-border/50 shadow-glow">
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -387,79 +385,8 @@ export default function Index() {
                 </div>
               </div>
             </Card>
-          )}
-
-          {/* Example Links - Only show when no market is generated */}
-          {!generatedMarket && (
-            <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">Try with:</p>
-              <div className="flex flex-wrap justify-center gap-2">
-                {[
-                  'https://twitter.com/elonmusk/status/123',
-                  'https://reddit.com/r/technology/comments/abc',
-                  'https://news.ycombinator.com/item?id=123',
-                ].map((exampleUrl) => (
-                  <button
-                    key={exampleUrl}
-                    onClick={() => setUrl(exampleUrl)}
-                    className="px-3 py-1 text-xs bg-muted hover:bg-muted/80 rounded-full transition-colors"
-                  >
-                    {exampleUrl.split('/')[2]}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* CTA to Markets - Only show when no market is generated */}
-          {!generatedMarket && (
-            <div className="pt-8">
-              <Link to="/markets">
-                <Button variant="outline" size="lg">
-                  Browse Existing Markets
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-              </Link>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Features Section */}
-      <div className="border-t border-border bg-card/30">
-        <div className="container mx-auto px-4 py-20">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <Card className="p-6 text-center space-y-3 bg-card/50 border-border/50">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto">
-                <Zap className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="font-semibold text-lg">Lightning Fast</h3>
-              <p className="text-sm text-muted-foreground">
-                Drop a link, get a market in seconds. No setup, no complexity.
-              </p>
-            </Card>
-
-            <Card className="p-6 text-center space-y-3 bg-card/50 border-border/50">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto">
-                <Sparkles className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="font-semibold text-lg">AI-Powered</h3>
-              <p className="text-sm text-muted-foreground">
-                Smart algorithms analyze content and generate perfect questions.
-              </p>
-            </Card>
-
-            <Card className="p-6 text-center space-y-3 bg-card/50 border-border/50">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mx-auto">
-                <TrendingUp className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="font-semibold text-lg">Earn Instantly</h3>
-              <p className="text-sm text-muted-foreground">
-                Get 2% of trading volume in real-time. Watch your earnings grow.
-              </p>
-            </Card>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

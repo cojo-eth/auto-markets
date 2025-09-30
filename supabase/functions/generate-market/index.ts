@@ -6,23 +6,49 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-async function fetchOGImage(url: string): Promise<string | null> {
+async function fetchPageContent(url: string): Promise<{ title: string; content: string; ogImage: string | null }> {
   try {
     const response = await fetch(url);
     const html = await response.text();
     
-    // Try to extract og:image
+    // Extract title
+    const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
+    const title = titleMatch ? titleMatch[1] : '';
+    
+    // Extract og:image
     const ogImageMatch = html.match(/<meta\s+property="og:image"\s+content="([^"]+)"/i) ||
                         html.match(/<meta\s+content="([^"]+)"\s+property="og:image"/i);
+    const ogImage = ogImageMatch ? ogImageMatch[1] : null;
     
-    if (ogImageMatch && ogImageMatch[1]) {
-      return ogImageMatch[1];
+    // For Twitter/X links, extract the tweet text
+    let content = '';
+    if (url.includes('twitter.com') || url.includes('x.com')) {
+      // Try to extract tweet text from meta description
+      const descMatch = html.match(/<meta\s+(?:name|property)="(?:description|og:description)"\s+content="([^"]+)"/i) ||
+                       html.match(/<meta\s+content="([^"]+)"\s+(?:name|property)="(?:description|og:description)"/i);
+      if (descMatch) {
+        content = descMatch[1];
+      }
+      
+      // Also try to get the tweet text from the page
+      const tweetMatch = html.match(/<div[^>]*data-testid="tweetText"[^>]*>([^<]+)<\/div>/i);
+      if (tweetMatch) {
+        content = tweetMatch[1] + (content ? ' | ' + content : '');
+      }
+    } else {
+      // For other pages, try to extract meta description
+      const descMatch = html.match(/<meta\s+name="description"\s+content="([^"]+)"/i) ||
+                       html.match(/<meta\s+content="([^"]+)"\s+name="description"/i);
+      if (descMatch) {
+        content = descMatch[1];
+      }
     }
     
-    return null;
+    console.log('Extracted content:', { title, content, ogImage });
+    return { title, content, ogImage };
   } catch (error) {
-    console.error('Error fetching OG image:', error);
-    return null;
+    console.error('Error fetching page content:', error);
+    throw new Error('Failed to fetch page content');
   }
 }
 
@@ -79,7 +105,11 @@ serve(async (req) => {
 
     console.log('Generating market for URL:', url);
 
-    // Call Gemini to analyze the webpage and generate a prediction market
+    // First, fetch the actual page content
+    const pageData = await fetchPageContent(url);
+    console.log('Page data:', pageData);
+
+    // Call Gemini to analyze the content and generate a prediction market
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -91,18 +121,22 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: `You are an expert at creating prediction markets. Given a URL, you will analyze the content and create a compelling binary (YES/NO) prediction market question. The market should be:
+            content: `You are an expert at creating prediction markets. Given content from a webpage, you will create a compelling binary (YES/NO) prediction market question. The market should be:
 - Clear and unambiguous
 - Resolvable within 7 days
 - Interesting and likely to attract bets
-- Based on the actual content of the URL`
+- Based strictly on the actual content provided`
           },
           {
             role: 'user',
-            content: `Please analyze this URL and create a prediction market: ${url}
+            content: `Based on this content, create a prediction market:
 
-First, fetch and read the content of the webpage. Then generate a binary prediction market with:
-1. A clear YES/NO question
+Title: ${pageData.title}
+Content: ${pageData.content}
+Source URL: ${url}
+
+Generate a binary prediction market with:
+1. A clear YES/NO question based on the actual content
 2. A detailed description explaining what the market is about
 3. How it will be resolved
 4. Any relevant context from the source`
@@ -161,15 +195,16 @@ First, fetch and read the content of the webpage. Then generate a binary predict
 
     const marketData = JSON.parse(toolCall.function.arguments);
     
-    // Try to fetch OG image first
-    let ogImage = await fetchOGImage(url);
+    // Use the OG image we already fetched
+    const ogImage = pageData.ogImage;
     
     // If no OG image found, generate one with AI
-    if (!ogImage) {
+    let finalImage = ogImage;
+    if (!finalImage) {
       console.log('No OG image found, generating with AI...');
       try {
-        ogImage = await generateMarketImage(marketData.question, LOVABLE_API_KEY);
-        console.log('Generated image URL:', ogImage);
+        finalImage = await generateMarketImage(marketData.question, LOVABLE_API_KEY);
+        console.log('Generated image URL:', finalImage);
       } catch (error) {
         console.error('Failed to generate image, will use placeholder:', error);
       }
@@ -182,7 +217,7 @@ First, fetch and read the content of the webpage. Then generate a binary predict
         market: {
           ...marketData,
           sourceUrl: url,
-          ogImage: ogImage || undefined,
+          ogImage: finalImage || undefined,
         }
       }),
       {

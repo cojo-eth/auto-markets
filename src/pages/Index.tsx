@@ -152,7 +152,7 @@ export default function Index() {
           backgroundRepeat: 'no-repeat',
         }}
       >
-        <div className="absolute inset-0 bg-background/88" />
+        <div className="absolute inset-0 bg-background/95" />
       </div>
 
       {/* Content */}

@@ -170,10 +170,6 @@ export default function Index() {
                 />
               </div>
 
-              {/* Subtitle */}
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-foreground tracking-tight -mt-6">
-                Instant prediction markets
-              </h1>
 
               {/* Feature Badges */}
               <div className="flex items-center justify-center gap-3 flex-wrap">
@@ -221,7 +217,7 @@ export default function Index() {
                       </>
                     ) : (
                       <>
-                        Generate Market
+                        Generate Prediction Market
                         <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                       </>
                     )}

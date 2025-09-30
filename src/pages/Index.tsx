@@ -159,49 +159,44 @@ export default function Index() {
       <div className="relative z-10 min-h-screen flex flex-col">
         {/* Hero Section */}
         {!generatedMarket ? (
-          <div className="flex-1 flex items-center justify-center px-4 py-12">
-            <div className="max-w-3xl w-full text-center space-y-10">
+          <div className="flex-1 flex items-center justify-center px-4 py-8">
+            <div className="max-w-2xl w-full text-center space-y-16">
               {/* Logo */}
               <div className="flex justify-center animate-fade-in">
                 <img 
                   src={logoImage} 
                   alt="Auto Markets" 
-                  className="w-72 md:w-96 h-auto"
+                  className="w-80 md:w-[440px] h-auto"
                 />
               </div>
 
-              {/* Subtitle */}
-              <h1 className="text-2xl md:text-3xl font-medium text-foreground tracking-tight">
-                Instant prediction markets
-              </h1>
-
               {/* Feature Badges */}
-              <div className="flex items-center justify-center gap-4 flex-wrap">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-card/40 backdrop-blur-sm border border-border/40 text-sm text-foreground/80">
+              <div className="flex items-center justify-center gap-3 flex-wrap">
+                <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-card/30 backdrop-blur-md border border-border/30 text-sm text-foreground/70 hover:bg-card/40 transition-all">
                   <Zap className="w-3.5 h-3.5 text-primary" />
                   <span className="font-medium">Instant Generation</span>
                 </div>
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-card/40 backdrop-blur-sm border border-border/40 text-sm text-foreground/80">
+                <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-card/30 backdrop-blur-md border border-border/30 text-sm text-foreground/70 hover:bg-card/40 transition-all">
                   <Sparkles className="w-3.5 h-3.5 text-accent" />
                   <span className="font-medium">AI Enhanced</span>
                 </div>
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-card/40 backdrop-blur-sm border border-border/40 text-sm text-foreground/80">
+                <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-full bg-card/30 backdrop-blur-md border border-border/30 text-sm text-foreground/70 hover:bg-card/40 transition-all">
                   <TrendingUp className="w-3.5 h-3.5 text-success" />
                   <span className="font-medium">Earn 2%</span>
                 </div>
               </div>
 
               {/* Input Section */}
-              <div className="space-y-4 max-w-2xl mx-auto pt-4">
+              <div className="space-y-3 max-w-xl mx-auto">
                 <div className="relative">
-                  <LinkIcon className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
+                  <LinkIcon className="absolute left-5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-foreground/60" />
                   <Input
                     type="url"
                     placeholder="https://x.com... or any link"
                     value={url}
                     onChange={(e) => setUrl(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
-                    className="pl-14 h-14 text-base bg-card/60 backdrop-blur-md border border-border/50 rounded-full focus:border-primary/50 focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/60"
+                    className="pl-12 pr-5 h-12 text-sm bg-card/40 backdrop-blur-md border border-border/40 rounded-full focus:border-primary/40 focus:ring-1 focus:ring-primary/20 transition-all placeholder:text-muted-foreground/50"
                     disabled={isGenerating}
                   />
                 </div>
@@ -209,35 +204,39 @@ export default function Index() {
                 <Button 
                   variant="hero" 
                   size="lg" 
-                  className="w-full h-14 text-base font-semibold rounded-full shadow-lg hover:shadow-glow"
+                  className="w-full h-12 text-sm font-semibold rounded-full bg-primary hover:bg-primary-glow shadow-md hover:shadow-lg transition-all duration-200"
                   onClick={handleGenerate}
                   disabled={isGenerating}
                 >
                   {isGenerating ? (
                     <>
-                      <Sparkles className="w-5 h-5 animate-spin" />
-                      Generating Market...
+                      <Sparkles className="w-4 h-4 animate-spin" />
+                      Generating...
                     </>
                   ) : (
                     <>
                       Generate Market
-                      <ArrowRight className="w-5 h-5" />
+                      <ArrowRight className="w-4 h-4" />
                     </>
                   )}
                 </Button>
-
-                {/* Tagline */}
-                <p className="text-base text-foreground/60 pt-2 font-medium">
-                  Drop a link. Make a market. Share it anywhere.
-                </p>
               </div>
 
+              {/* Tagline */}
+              <p className="text-sm text-foreground/50 font-medium tracking-wide">
+                Drop a link. Make a market. Share it anywhere.
+              </p>
+
               {/* Browse Markets Link */}
-              <div className="pt-6">
+              <div>
                 <Link to="/markets">
-                  <Button variant="outline" size="lg" className="rounded-full border-border/60 hover:bg-card/40 transition-all">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="text-foreground/60 hover:text-foreground/90 hover:bg-transparent transition-colors"
+                  >
                     Browse Markets
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </Button>
                 </Link>
               </div>

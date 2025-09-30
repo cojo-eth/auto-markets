@@ -186,7 +186,7 @@ export default function Index() {
               {/* Input Section */}
               <div className="space-y-3 max-w-xl mx-auto">
                 <div className="relative">
-                  <Copy className="absolute left-5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-muted-foreground/60" />
+                  <Copy className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/60" />
                   <Input
                     type="url"
                     placeholder="https://x.com... or any link"

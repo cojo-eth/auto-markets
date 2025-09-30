@@ -6,49 +6,58 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-async function fetchPageContent(url: string): Promise<{ title: string; content: string; ogImage: string | null }> {
+async function fetchPageMetadata(url: string): Promise<{ title: string; description: string; image: string | null }> {
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
     const html = await response.text();
     
-    // Extract title
-    const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
-    const title = titleMatch ? titleMatch[1] : '';
-    
-    // Extract og:image
-    const ogImageMatch = html.match(/<meta\s+property="og:image"\s+content="([^"]+)"/i) ||
-                        html.match(/<meta\s+content="([^"]+)"\s+property="og:image"/i);
-    const ogImage = ogImageMatch ? ogImageMatch[1] : null;
-    
-    // For Twitter/X links, extract the tweet text
-    let content = '';
-    if (url.includes('twitter.com') || url.includes('x.com')) {
-      // Try to extract tweet text from meta description
-      const descMatch = html.match(/<meta\s+(?:name|property)="(?:description|og:description)"\s+content="([^"]+)"/i) ||
-                       html.match(/<meta\s+content="([^"]+)"\s+(?:name|property)="(?:description|og:description)"/i);
-      if (descMatch) {
-        content = descMatch[1];
-      }
+    // Helper function to extract meta content
+    const getMeta = (property: string): string | null => {
+      const patterns = [
+        new RegExp(`<meta\\s+property="${property}"\\s+content="([^"]+)"`, 'i'),
+        new RegExp(`<meta\\s+content="([^"]+)"\\s+property="${property}"`, 'i'),
+        new RegExp(`<meta\\s+name="${property}"\\s+content="([^"]+)"`, 'i'),
+        new RegExp(`<meta\\s+content="([^"]+)"\\s+name="${property}"`, 'i'),
+      ];
       
-      // Also try to get the tweet text from the page
-      const tweetMatch = html.match(/<div[^>]*data-testid="tweetText"[^>]*>([^<]+)<\/div>/i);
-      if (tweetMatch) {
-        content = tweetMatch[1] + (content ? ' | ' + content : '');
+      for (const pattern of patterns) {
+        const match = html.match(pattern);
+        if (match && match[1]) {
+          return match[1].replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#039;/g, "'");
+        }
       }
-    } else {
-      // For other pages, try to extract meta description
-      const descMatch = html.match(/<meta\s+name="description"\s+content="([^"]+)"/i) ||
-                       html.match(/<meta\s+content="([^"]+)"\s+name="description"/i);
-      if (descMatch) {
-        content = descMatch[1];
-      }
-    }
+      return null;
+    };
     
-    console.log('Extracted content:', { title, content, ogImage });
-    return { title, content, ogImage };
+    // Extract Open Graph and Twitter card data
+    const ogTitle = getMeta('og:title');
+    const ogDescription = getMeta('og:description');
+    const ogImage = getMeta('og:image');
+    
+    const twitterTitle = getMeta('twitter:title');
+    const twitterDescription = getMeta('twitter:description');
+    const twitterImage = getMeta('twitter:image');
+    
+    // Fallback to standard meta tags
+    const metaDescription = getMeta('description');
+    const titleMatch = html.match(/<title>([^<]+)<\/title>/i);
+    const htmlTitle = titleMatch ? titleMatch[1] : '';
+    
+    // Prefer OG/Twitter tags, fall back to standard
+    const title = ogTitle || twitterTitle || htmlTitle || 'No title found';
+    const description = ogDescription || twitterDescription || metaDescription || 'No description found';
+    const image = ogImage || twitterImage || null;
+    
+    console.log('Extracted metadata:', { title, description, image: image ? 'Found' : 'None' });
+    
+    return { title, description, image };
   } catch (error) {
-    console.error('Error fetching page content:', error);
-    throw new Error('Failed to fetch page content');
+    console.error('Error fetching page metadata:', error);
+    throw new Error(`Failed to fetch page: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
@@ -103,11 +112,11 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY not configured');
     }
 
-    console.log('Generating market for URL:', url);
+    console.log('Fetching metadata for URL:', url);
 
-    // First, fetch the actual page content
-    const pageData = await fetchPageContent(url);
-    console.log('Page data:', pageData);
+    // Fetch the page metadata (OG tags, Twitter cards, etc.)
+    const metadata = await fetchPageMetadata(url);
+    console.log('Fetched metadata:', metadata);
 
     // Call Gemini to analyze the content and generate a prediction market
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -129,17 +138,19 @@ serve(async (req) => {
           },
           {
             role: 'user',
-            content: `Based on this content, create a prediction market:
+            content: `Based on this webpage metadata, create a binary prediction market:
 
-Title: ${pageData.title}
-Content: ${pageData.content}
-Source URL: ${url}
+**Source:** ${url}
+**Title:** ${metadata.title}
+**Description:** ${metadata.description}
 
-Generate a binary prediction market with:
-1. A clear YES/NO question based on the actual content
-2. A detailed description explaining what the market is about
-3. How it will be resolved
-4. Any relevant context from the source`
+Create a prediction market with:
+1. A clear YES/NO question that can be resolved within 7 days
+2. A detailed description explaining resolution criteria
+3. Context from the source material
+4. Make it interesting and likely to attract bets
+
+IMPORTANT: Base your market ONLY on the actual content provided above. Do not make assumptions or add unrelated topics.`
           }
         ],
         tools: [
@@ -195,18 +206,17 @@ Generate a binary prediction market with:
 
     const marketData = JSON.parse(toolCall.function.arguments);
     
-    // Use the OG image we already fetched
-    const ogImage = pageData.ogImage;
+    // Use the metadata image if available
+    let finalImage = metadata.image;
     
-    // If no OG image found, generate one with AI
-    let finalImage = ogImage;
+    // If no image found in metadata, generate one with AI
     if (!finalImage) {
-      console.log('No OG image found, generating with AI...');
+      console.log('No image in metadata, generating with AI...');
       try {
         finalImage = await generateMarketImage(marketData.question, LOVABLE_API_KEY);
-        console.log('Generated image URL:', finalImage);
+        console.log('Generated image URL:', finalImage ? 'Success' : 'Failed');
       } catch (error) {
-        console.error('Failed to generate image, will use placeholder:', error);
+        console.error('Failed to generate image:', error);
       }
     }
     

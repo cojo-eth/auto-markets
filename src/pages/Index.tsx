@@ -152,7 +152,7 @@ export default function Index() {
           backgroundRepeat: 'no-repeat',
         }}
       >
-        <div className="absolute inset-0 bg-background/90" />
+        <div className="absolute inset-0 bg-background/88" />
       </div>
 
       {/* Content */}
@@ -171,7 +171,7 @@ export default function Index() {
               </div>
 
               {/* Subtitle */}
-              <h1 className="text-lg md:text-xl font-medium text-foreground/70 tracking-wide -mt-6">
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-foreground tracking-tight -mt-6">
                 Instant prediction markets
               </h1>
 

@@ -160,7 +160,7 @@ export default function Index() {
         {/* Hero Section */}
         {!generatedMarket ? (
           <div className="flex-1 flex items-center justify-center px-4 py-8">
-            <div className="max-w-2xl w-full text-center space-y-16">
+            <div className="max-w-2xl w-full text-center space-y-14">
               {/* Logo */}
               <div className="flex justify-center animate-fade-in">
                 <img 
@@ -169,6 +169,11 @@ export default function Index() {
                   className="w-80 md:w-[440px] h-auto"
                 />
               </div>
+
+              {/* Subtitle */}
+              <h1 className="text-lg md:text-xl font-medium text-foreground/70 tracking-wide -mt-6">
+                Instant prediction markets
+              </h1>
 
               {/* Feature Badges */}
               <div className="flex items-center justify-center gap-3 flex-wrap">
@@ -204,21 +209,24 @@ export default function Index() {
                 <Button 
                   variant="hero" 
                   size="lg" 
-                  className="w-full h-12 text-sm font-semibold rounded-full bg-primary hover:bg-primary-glow shadow-md hover:shadow-lg transition-all duration-200"
+                  className="w-full h-12 text-sm font-semibold rounded-full relative overflow-hidden group bg-primary hover:bg-primary shadow-sm"
                   onClick={handleGenerate}
                   disabled={isGenerating}
                 >
-                  {isGenerating ? (
-                    <>
-                      <Sparkles className="w-4 h-4 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      Generate Market
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
+                  <span className="relative z-10 flex items-center justify-center gap-2">
+                    {isGenerating ? (
+                      <>
+                        <Sparkles className="w-4 h-4 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        Generate Market
+                        <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                      </>
+                    )}
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-primary via-primary-glow to-primary opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </Button>
               </div>
 

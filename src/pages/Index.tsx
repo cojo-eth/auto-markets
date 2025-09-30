@@ -58,6 +58,7 @@ export default function Index() {
 
     try {
       // Call the edge function to generate market with AI
+      console.log('Calling generate-market edge function with URL:', url);
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-market`,
         {
@@ -69,7 +70,9 @@ export default function Index() {
         }
       );
 
+      console.log('Response status:', response.status);
       const data = await response.json();
+      console.log('Response data:', data);
 
       if (!data.success) {
         throw new Error(data.error || 'Failed to generate market');

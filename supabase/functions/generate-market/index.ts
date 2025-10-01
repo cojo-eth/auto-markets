@@ -124,6 +124,46 @@ async function generateMarketImage(prompt: string, apiKey: string): Promise<stri
   }
 }
 
+async function generateTopicIcon(topic: string, apiKey: string): Promise<string> {
+  try {
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash-image-preview',
+        messages: [
+          {
+            role: 'user',
+            content: `Generate a simple, clean icon representing: ${topic}. The icon should be:
+- A single clear symbol or object (like a soccer ball for soccer, a chart for stocks, etc.)
+- Clean and minimalist design
+- Square aspect ratio (1:1)
+- Professional looking
+- Suitable as a small icon
+- On a transparent or white background`
+          }
+        ],
+        modalities: ['image', 'text']
+      }),
+    });
+
+    const data = await response.json();
+    const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    
+    if (imageUrl) {
+      return imageUrl;
+    }
+    
+    throw new Error('No icon generated');
+  } catch (error) {
+    console.error('Error generating icon:', error);
+    throw error;
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -249,6 +289,16 @@ CRITICAL: The market MUST be about the actual subject matter in the title/descri
       }
     }
     
+    // Generate topic-specific icon
+    let topicIcon: string | undefined;
+    try {
+      console.log('Generating topic icon...');
+      topicIcon = await generateTopicIcon(marketData.question, LOVABLE_API_KEY);
+      console.log('Generated icon URL:', topicIcon ? 'Success' : 'Failed');
+    } catch (error) {
+      console.error('Failed to generate icon:', error);
+    }
+    
     // Return the generated market data
     return new Response(
       JSON.stringify({
@@ -257,6 +307,7 @@ CRITICAL: The market MUST be about the actual subject matter in the title/descri
           ...marketData,
           sourceUrl: url,
           ogImage: finalImage || undefined,
+          iconUrl: topicIcon || undefined,
         }
       }),
       {

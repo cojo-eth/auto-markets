@@ -5,6 +5,7 @@ export interface Market {
   sourceUrl: string;
   ogImage?: string;
   ogTitle?: string;
+  iconUrl?: string; // AI-generated topic-specific icon
   
   // Outcomes
   yesPrice: number; // 0-100 representing percentage

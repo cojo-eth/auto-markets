@@ -18,19 +18,27 @@ export const MarketCard = ({ market }: MarketCardProps) => {
         <div className="p-5 space-y-3">
           <div className="flex items-start gap-3">
             <img 
-              src={faviconUrl} 
+              src={market.iconUrl || faviconUrl} 
               alt=""
-              className="w-8 h-8 rounded shrink-0 mt-1"
+              className="w-8 h-8 rounded shrink-0 mt-1 object-cover"
               onError={(e) => {
-                e.currentTarget.style.display = 'none';
+                e.currentTarget.src = faviconUrl;
               }}
             />
             <div className="flex-1 min-w-0">
               <h3 className="font-semibold text-base line-clamp-2 group-hover:text-primary transition-colors mb-2">
                 {market.question}
               </h3>
-              <Badge variant="outline" className="text-xs">
-                {market.confidence}% confident
+              <Badge variant="outline" className="text-xs flex items-center gap-1.5 w-fit">
+                <span className="text-muted-foreground">Source:</span>
+                <img 
+                  src={faviconUrl} 
+                  alt=""
+                  className="w-3 h-3"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
               </Badge>
             </div>
           </div>

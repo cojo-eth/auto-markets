@@ -114,7 +114,14 @@ export default function MarketDetail() {
             <Card className="p-4 bg-muted/30">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <ExternalLink className="w-5 h-5 text-muted-foreground" />
+                  <img 
+                    src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(market.sourceUrl)}&sz=64`}
+                    alt=""
+                    className="w-8 h-8 rounded"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
                   <div>
                     <p className="text-sm font-medium">Source</p>
                     <p className="text-xs text-muted-foreground">{market.ogTitle || 'Original Post'}</p>

@@ -2,13 +2,17 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { Copy, Sparkles, TrendingUp, Zap, ArrowRight, Edit2, Check, Calendar, DollarSign, Shield } from 'lucide-react';
+import { Copy, Sparkles, TrendingUp, Zap, ArrowRight, Check, CalendarIcon, DollarSign, Shield, Wallet } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { generateMockMarket, saveMarket } from '@/lib/mockData';
 import { useToast } from '@/hooks/use-toast';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 import logoImage from '@/assets/logo.png';
 import gearsBackground from '@/assets/gears-bg.png';
 
@@ -19,7 +23,7 @@ interface GeneratedMarket {
   ogImage?: string;
   confidence: number;
   sourceUrl: string;
-  duration?: number; // in days
+  endTime?: Date;
   oracleType?: 'creator' | 'ai';
   poolSize?: number;
 }
@@ -78,15 +82,18 @@ export default function Index() {
         throw new Error(data.error || 'Failed to generate market');
       }
 
+      const defaultEndTime = new Date();
+      defaultEndTime.setDate(defaultEndTime.getDate() + 7);
+      
       setGeneratedMarket({
         ...data.market,
-        duration: 7,
+        endTime: defaultEndTime,
         oracleType: 'creator',
         poolSize: 100,
       });
       setEditedMarket({
         ...data.market,
-        duration: 7,
+        endTime: defaultEndTime,
         oracleType: 'creator',
         poolSize: 100,
       });
@@ -110,8 +117,7 @@ export default function Index() {
   const handleLaunchMarket = () => {
     if (!editedMarket) return;
     
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + (editedMarket.duration || 7));
+    const expiresAt = editedMarket.endTime || new Date();
     
     const market = generateMockMarket(editedMarket.sourceUrl, {
       question: editedMarket.question,
@@ -122,7 +128,7 @@ export default function Index() {
       expiresAt,
       oracleType: editedMarket.oracleType || 'creator',
       creatorStake: editedMarket.poolSize || 100,
-      liquidity: (editedMarket.poolSize || 100) * 2, // 2x multiplier for virtual liquidity
+      liquidity: (editedMarket.poolSize || 100) * 2,
     });
     
     // Save to localStorage
@@ -160,17 +166,38 @@ export default function Index() {
 
       {/* Content */}
       <div className="relative z-10 min-h-screen flex flex-col">
+        {/* Header */}
+        <header className="sticky top-0 z-20 border-b border-border/40 bg-background/80 backdrop-blur-md">
+          <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+            <Link to="/" className="flex items-center">
+              <img src={logoImage} alt="Auto Markets" className="h-8" />
+            </Link>
+            <div className="flex items-center gap-3">
+              <Link to="/markets">
+                <Button variant="ghost" size="sm" className="text-foreground/70 hover:text-foreground">
+                  Browse Markets
+                </Button>
+              </Link>
+              <Button variant="outline" size="sm" className="gap-2">
+                <Wallet className="w-4 h-4" />
+                Connect Wallet
+              </Button>
+            </div>
+          </div>
+        </header>
+
         {/* Hero Section */}
         {!generatedMarket ? (
           <div className="flex-1 flex items-center justify-center px-4 py-8">
             <div className="max-w-2xl w-full text-center space-y-14">
               {/* Logo */}
-              <div className="flex justify-center animate-fade-in">
+              <div className="flex flex-col items-center animate-fade-in space-y-3">
                 <img 
                   src={logoImage} 
                   alt="Auto Markets" 
                   className="w-80 md:w-[440px] h-auto"
                 />
+                <p className="text-lg text-foreground/60 font-medium">Instant prediction markets</p>
               </div>
 
 
@@ -229,20 +256,6 @@ export default function Index() {
               <p className="text-sm text-foreground/50 font-medium tracking-wide">
                 Drop a link. Make a market. Share it anywhere.
               </p>
-
-              {/* Browse Markets Link */}
-              <div>
-                <Link to="/markets">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="text-foreground/60 hover:text-foreground/90 hover:bg-transparent transition-colors"
-                  >
-                    Browse Markets
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Button>
-                </Link>
-              </div>
             </div>
           </div>
         ) : (
@@ -293,43 +306,43 @@ export default function Index() {
                         className="min-h-32"
                       />
                     </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="ogTitle">Market Title</Label>
-                      <Input
-                        id="ogTitle"
-                        value={editedMarket?.ogTitle || ''}
-                        onChange={(e) => setEditedMarket(prev => prev ? {...prev, ogTitle: e.target.value} : null)}
-                      />
-                    </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="duration" className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4" />
-                      Duration
+                    <Label className="flex items-center gap-2">
+                      <CalendarIcon className="w-4 h-4" />
+                      End time
                     </Label>
-                    <Select 
-                      value={editedMarket?.duration?.toString()} 
-                      onValueChange={(value) => setEditedMarket(prev => prev ? {...prev, duration: parseInt(value)} : null)}
-                    >
-                      <SelectTrigger id="duration">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1">1 day</SelectItem>
-                        <SelectItem value="3">3 days</SelectItem>
-                        <SelectItem value="7">7 days (default)</SelectItem>
-                        <SelectItem value="14">14 days</SelectItem>
-                        <SelectItem value="30">30 days</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !editedMarket?.endTime && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {editedMarket?.endTime ? format(editedMarket.endTime, "PPP p") : <span>Pick a date</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={editedMarket?.endTime}
+                          onSelect={(date) => setEditedMarket(prev => prev ? {...prev, endTime: date} : null)}
+                          disabled={(date) => date < new Date()}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="oracleType" className="flex items-center gap-2">
                       <Shield className="w-4 h-4" />
-                      Oracle Type
+                      Who decides
                     </Label>
                     <Select 
                       value={editedMarket?.oracleType} 
@@ -339,8 +352,8 @@ export default function Index() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="creator">Creator Oracle</SelectItem>
-                        <SelectItem value="ai">AI Oracle</SelectItem>
+                        <SelectItem value="creator">Market Creator</SelectItem>
+                        <SelectItem value="ai">AI Resolution</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -348,7 +361,7 @@ export default function Index() {
                   <div className="space-y-2 md:col-span-2">
                     <Label htmlFor="poolSize" className="flex items-center gap-2">
                       <DollarSign className="w-4 h-4" />
-                      Initial Pool Size (USD)
+                      Add funds to pool
                     </Label>
                     <Input
                       id="poolSize"
@@ -357,12 +370,17 @@ export default function Index() {
                       value={editedMarket?.poolSize || 100}
                       onChange={(e) => setEditedMarket(prev => prev ? {...prev, poolSize: parseInt(e.target.value) || 100} : null)}
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Your stake to seed the market. Platform adds 100x virtual liquidity.
-                    </p>
                   </div>
 
-                  <div className="md:col-span-2 p-4 bg-muted/50 rounded-lg">
+                  <div className="md:col-span-2 p-4 bg-muted/50 rounded-lg flex items-center gap-3">
+                    <img 
+                      src={`https://www.google.com/s2/favicons?domain=${editedMarket?.sourceUrl}&sz=64`} 
+                      alt="Source favicon" 
+                      className="w-6 h-6"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
                     <p className="text-sm text-muted-foreground">
                       <strong>Source:</strong>{' '}
                       <a href={editedMarket?.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
